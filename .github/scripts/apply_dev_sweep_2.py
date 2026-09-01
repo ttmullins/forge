@@ -24,8 +24,8 @@ replace_one(
 )
 replace_one(
     "forge-gui/res/adventure/common/world/biomes/outlands.json",
-    '  "spriteNames": []\n \t"structures": [',
-    '  "spriteNames": [],\n \t"structures": [',
+    '  "spriteNames": []\n  \t"structures": [',
+    '  "spriteNames": [],\n  \t"structures": [',
 )
 
 # Java String values must be compared by value, not object identity.
@@ -150,10 +150,10 @@ new = """            for (int i = 0; i < keywords.size(); i++) {
 
             if (cantBlockThisTurn) {
                 if (gains) {
-                    sb.append(\" and \" );
+                    sb.append(\" and \");
                 } else if (gets) {
                     // P/T formatting above already leaves a trailing space.
-                    sb.append(\"and \" );
+                    sb.append(\"and \");
                 }
                 sb.append(\"can't block\");
             }
