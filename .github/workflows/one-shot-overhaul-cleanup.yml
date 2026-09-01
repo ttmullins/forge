@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   cleanup-and-validate:
-    if: github.event.head_commit.message == 'Add one-shot overhaul cleanup workflow'
+    if: startsWith(github.event.head_commit.message, 'Run one-shot overhaul cleanup')
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -31,40 +31,23 @@ jobs:
           import json
           import subprocess
 
-          # #7844: restore Foretell flags when rolling back a snapshot.
           snapshot = Path('forge-game/src/main/java/forge/game/GameSnapshot.java')
           text = snapshot.read_text()
-          old = '''        //newCard.setForetold(fromCard.isForetold());
-          //newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
-          # Be tolerant of indentation while still requiring exactly one intended pair.
-          if old not in text:
-              old = '''        //newCard.setForetold(fromCard.isForetold());
-        //newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
-          new = '''        newCard.setForetold(fromCard.isForetold());
-        newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
+          old = "        //newCard.setForetold(fromCard.isForetold());\n        //newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());"
+          new = "        newCard.setForetold(fromCard.isForetold());\n        newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());"
           assert text.count(old) == 1, 'Expected exactly one commented Foretell restoration pair'
           snapshot.write_text(text.replace(old, new, 1))
 
-          # #9276: remove accidental whole-file noise by taking ColumnDef directly from dev,
-          # then apply only the intended null-safe DECK_COLOR sort change.
           column = Path('forge-gui/src/main/java/forge/itemmanager/ColumnDef.java')
           dev_text = subprocess.check_output(
               ['git', 'show', 'FETCH_HEAD:forge-gui/src/main/java/forge/itemmanager/ColumnDef.java'],
               text=True,
           )
-          old_block = '''    DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
-            from -> toDeckColor(from.getKey()).getOrderWeight(),
-            from -> toDeckColor(from.getKey())),'''
-          new_block = '''    DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
-            from -> {
-                ColorSet color = toDeckColor(from.getKey());
-                return color == null ? -1 : color.getOrderWeight();
-            },
-            from -> toDeckColor(from.getKey())),'''
+          old_block = "    DECK_COLOR(\"lblColor\", \"ttColor\", 70, true, SortState.ASC,\n            from -> toDeckColor(from.getKey()).getOrderWeight(),\n            from -> toDeckColor(from.getKey())),"
+          new_block = "    DECK_COLOR(\"lblColor\", \"ttColor\", 70, true, SortState.ASC,\n            from -> {\n                ColorSet color = toDeckColor(from.getKey());\n                return color == null ? -1 : color.getOrderWeight();\n            },\n            from -> toDeckColor(from.getKey())),"
           assert dev_text.count(old_block) == 1, 'Expected DECK_COLOR baseline block exactly once in dev'
           column.write_text(dev_text.replace(old_block, new_block, 1))
 
-          # #11306: item name is used as an edition-name lookup key; the official set is singular.
           items = Path('forge-gui/res/adventure/common/world/items.json')
           item_text = items.read_text()
           typo = 'Landscape Sketchbook - Thrones of Eldraine'
@@ -74,10 +57,7 @@ jobs:
           items.write_text(item_text)
           json.loads(item_text)
 
-          # Guard the intended end state.
-          final_snapshot = snapshot.read_text()
-          assert 'newCard.setForetold(fromCard.isForetold());' in final_snapshot
-          assert '//newCard.setForetold(fromCard.isForetold());' not in final_snapshot
+          assert '//newCard.setForetold(fromCard.isForetold());' not in snapshot.read_text()
           assert typo not in items.read_text()
           PY
 
