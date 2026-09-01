@@ -67,11 +67,8 @@ public abstract class PaperCardPredicates {
     public static Predicate<PaperCard> printedInAnyEditions(final String[] editionCodes) {
         Set<String> editions = new HashSet<>(Arrays.asList(editionCodes));
 
-        return card -> StaticData.instance().getCommonCards().getAllCards(card).stream()
-            .map(PaperCard::getEdition).anyMatch(editionCode ->
-                editions.contains(editionCode) &&
-                    StaticData.instance().getCardEdition(editionCode).isCardObtainable(card.getName())
-        );
+        return card -> editions.contains(card.getEdition()) &&
+            StaticData.instance().getCardEdition(card.getEdition()).isCardObtainable(card.getName());
     }
 
     /**
