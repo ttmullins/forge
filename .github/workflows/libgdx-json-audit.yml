@@ -17,11 +17,13 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: Build LibGDX dependency classpath
+      - name: Prime LibGDX dependency
         shell: bash
         run: |
-          mvn -q -pl forge-gui-mobile -am -DskipTests package
-          mvn -q -pl forge-gui-mobile dependency:build-classpath -Dmdep.outputFile=/tmp/gdx-cp.txt
+          mvn -q -DskipTests dependency:go-offline
+          GDX_JAR=$(find "$HOME/.m2/repository/com/badlogicgames/gdx/gdx" -name 'gdx-*.jar' -type f | sort | tail -1)
+          test -n "$GDX_JAR" && test -f "$GDX_JAR"
+          echo "GDX_JAR=$GDX_JAR" >> "$GITHUB_ENV"
       - name: Parse resources with Forge's LibGDX JSON parser
         shell: bash
         run: |
@@ -89,9 +91,8 @@ jobs:
               }
           }
           JAVA
-          CP="forge-gui-mobile/target/classes:$(cat /tmp/gdx-cp.txt)"
-          javac -cp "$CP" /tmp/LibGdxJsonAudit.java
-          java -cp "/tmp:$CP" LibGdxJsonAudit
+          javac -cp "$GDX_JAR" /tmp/LibGdxJsonAudit.java
+          java -cp "/tmp:$GDX_JAR" LibGdxJsonAudit
       - uses: actions/upload-artifact@v4
         with:
           name: libgdx-json-audit
