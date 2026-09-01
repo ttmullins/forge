@@ -138,7 +138,7 @@ public class TargetRestrictions {
         } else if ("Any".equals(mapParams.get("ValidTgts"))) {
             this.validTgtsDesc = "damage target";
         } else {
-            this.validTgtsDesc = Lang.getInstance().buildValidDesc(Arrays.asList(this.validTgts), maxTargets != "1");
+            this.validTgtsDesc = Lang.getInstance().buildValidDesc(Arrays.asList(this.validTgts), !"1".equals(maxTargets));
         }
 
         if (mapParams.containsKey("TgtPrompt")) {

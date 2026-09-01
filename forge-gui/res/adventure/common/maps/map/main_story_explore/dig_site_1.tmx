@@ -86,7 +86,7 @@
     &quot;text&quot;:&quot;As the machine collapses to the ground in a heap of parts, several levers and gears come free from within its metal carapace.&quot;, 
     &quot;options&quot;:[{ 
 		&quot;name&quot;:&quot;Perhaps these will be useful somewhere?&quot;,
-		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1}, {&quot;advanceMapFlag&quot;:&quot;hasGears&quot;}],
+		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1}, {&quot;advanceMapFlag&quot;:&quot;hasGears&quot;}]
 	}]
    }
 ] 
@@ -145,7 +145,7 @@
 		&quot;text&quot;:&quot;The connected machinery whirrs to life, and a hidden room to your east opens!&quot;,
 		&quot;condition&quot;:[{&quot;checkMapFlag&quot;:&quot;hasGears&quot;}],
 		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1}],
-		&quot;name&quot;:&quot;Connect a gear from the golem to the lever.&quot; 
+		&quot;name&quot;:&quot;Connect a gear from the golem to the lever.&quot;,
 			&quot;options&quot;:[{
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:118},{&quot;deleteMapObject&quot;:121},{&quot;deleteMapObject&quot;:123},{&quot;deleteMapObject&quot;:124},{&quot;deleteMapObject&quot;:125}],
 			&quot;name&quot;:&quot;(Continue)&quot; }]
@@ -167,7 +167,7 @@
 		&quot;text&quot;:&quot;You feel the floor begin to rumble under your feet as the ancient gears grind against one another, but nothing obvious appears to happen.&quot;,
 		&quot;condition&quot;:[{&quot;checkMapFlag&quot;:&quot;hasGears&quot;}],
 		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1}],
-		&quot;name&quot;:&quot;Connect a lever from the golem to the gears.&quot; 
+		&quot;name&quot;:&quot;Connect a lever from the golem to the gears.&quot;,
 			&quot;options&quot;:[{
 			&quot;name&quot;:&quot;(Continue)&quot; }]
 	},

@@ -58,7 +58,7 @@ public class GuiDownloader extends DefaultBoundedRangeModel {
             SOverlayUtils.hideOverlay();
 
             if (callback != null) {
-                callback.accept(btnStart.getText() == "OK"); //determine result based on whether download finished
+                callback.accept("OK".equals(btnStart.getText())); //determine result based on whether download finished
             }
         }
     };

@@ -149,7 +149,7 @@ public class MakeCardEffect extends SpellAbilityEffect {
                     while (toMake > 0) {
                         PaperCard pc;
                         if (pack != null) {
-                            pc = pack.stream().filter(p -> p.getRules().getMainPart().getName().equals(name)).findAny().get();
+                            pc = pack.stream().filter(p -> p.getRules().getMainPart().getName().equals(name)).findAny().orElse(null);
                         } else {
                             // Prefer the sa host's current edition, but custom/adventure cards and
                             // generated cards may not have a matching set-code printing.

@@ -171,7 +171,7 @@
    <properties>
     <property name="dialog">[
 {
-   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}, &quot;not&quot;: true}]
+   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}, &quot;not&quot;: true}],
    &quot;text&quot;: &quot;A fountain borders the walkway here. The stonework is chipped and dirty, but the water appears to be surprisingly clean and clear.&quot;,
    &quot;options&quot;: [{
       &quot;name&quot;: &quot;(Continue)&quot;, &quot;action&quot;: [{&quot;deleteMapObject&quot;:-1}]}]
@@ -332,7 +332,7 @@
    <properties>
     <property name="dialog">[
 {
-   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}, &quot;not&quot;: true}]
+   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}, &quot;not&quot;: true}],
    &quot;text&quot;: &quot;And here lies gruesome confirmation of the merchant's tale, by way of the remains of a merfolk tail. It appears that there was indeed one of the aquatic people here far from their normal territory which it will never return to.&quot;,
    &quot;options&quot;: [{
       &quot;name&quot;: &quot;(Continue)&quot;,
@@ -350,7 +350,7 @@
    <properties>
     <property name="dialog">[
 {
-   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}},{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;escaped&quot;}, &quot;not&quot;: true}]
+   &quot;condition&quot;: [{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;demonsActive&quot;}},{&quot;checkMapFlag&quot;: {&quot;key&quot;:&quot;escaped&quot;}, &quot;not&quot;: true}],
    &quot;action&quot;: [{&quot;setMapFlag&quot;: {&quot;key&quot;:&quot;escaped&quot;, &quot;val&quot;: 1}}]
 }
 ]</property>

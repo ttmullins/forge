@@ -127,7 +127,7 @@
 		},   
 		{      
 			&quot;name&quot;:&quot;I did, just like you asked.&quot;,
-			&quot;text&quot;:&quot;...BUT HER MIND IS STILL IMPRISONED.&quot;
+			&quot;text&quot;:&quot;...BUT HER MIND IS STILL IMPRISONED.&quot;,
 			&quot;options&quot;:[
 			{ 	
 				&quot;name&quot;:&quot;Okay, yeah, I remember this now.&quot;,
@@ -138,7 +138,7 @@
 				&quot;text&quot;:&quot;DEFEAT LILIANA AND I CAN HELP HER RECOVER, SO THAT SHE MAY AID YOU IN BATTLES YET TO COME. TAKE HEED, {var=player_name}, THIS WILL BE A DIFFICULT TASK.&quot;,
 				&quot;options&quot;:[
 				{
-					&quot;text&quot;:&quot;THE PORTALS BEHIND ME LEAD TO PARTS OF HER REALM. ONCE ACTIVATED, YOU MAY USE THEM TO TRAVEL MORE QUICKLY.&quot;
+					&quot;text&quot;:&quot;THE PORTALS BEHIND ME LEAD TO PARTS OF HER REALM. ONCE ACTIVATED, YOU MAY USE THEM TO TRAVEL MORE QUICKLY.&quot;,
 					&quot;name&quot;:&quot;Thank you for the warning.&quot;,
 					&quot;options&quot;:[
 					{

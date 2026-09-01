@@ -9,6 +9,7 @@ import java.util.function.Function;
 import com.google.common.collect.Lists;
 
 import forge.card.CardEdition;
+import forge.card.CardRarity;
 import forge.card.CardType;
 import forge.card.ColorSet;
 import forge.deck.DeckProxy;
@@ -125,7 +126,7 @@ public enum GroupDef {
                     if (type.isPlaneswalker()){
                         return 0;
                     }
-                    if (((PaperCard) item).getRarity().toString() == "R"){
+                    if (((PaperCard) item).getRarity() == CardRarity.Rare) {
                         return 1;
                     }
                     if (type.isCreature()){

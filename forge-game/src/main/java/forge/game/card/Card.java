@@ -2929,7 +2929,7 @@ public class Card extends GameEntity implements Comparable<Card>, IHasSVars, ITr
             boolean hasMeldEffect = hasSVar("Meld")
                     || state.getNonManaAbilities().anyMatch(SpellAbilityPredicates.isApi(ApiType.Meld));
             String meld = this.getRules().getMeldWith();
-            if (meld != "" && !hasMeldEffect) {
+            if (!meld.isEmpty() && !hasMeldEffect) {
                 sb.append("\r\n");
                 sb.append("(Melds with ").append(meld).append(".)");
                 sb.append("\r\n");

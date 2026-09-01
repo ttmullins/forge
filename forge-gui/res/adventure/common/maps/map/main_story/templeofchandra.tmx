@@ -362,7 +362,7 @@
 	{ 
 		&quot;text&quot;:&quot;You hear some loud sounds coming from the east.&quot;,
 		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1},{&quot;advanceMapFlag&quot;:&quot;gate&quot;}],
-		&quot;name&quot;:&quot;Flip the switch&quot;
+		&quot;name&quot;:&quot;Flip the switch&quot;,
 			&quot;options&quot;:[{
 			&quot;condition&quot;:[{&quot;getMapFlag&quot;:{&quot;key&quot;:&quot;gate&quot;,&quot;op&quot;:&quot;&gt;=&quot;,&quot;val&quot;:2}}],
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:18}],
@@ -384,7 +384,7 @@
 	{ 
 		&quot;text&quot;:&quot;You hear some loud sounds coming from the east.&quot;,
 		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1},{&quot;advanceMapFlag&quot;:&quot;gate&quot;}],
-		&quot;name&quot;:&quot;Flip the switch&quot;
+		&quot;name&quot;:&quot;Flip the switch&quot;,
 			&quot;options&quot;:[{
 			&quot;condition&quot;:[{&quot;getMapFlag&quot;:{&quot;key&quot;:&quot;gate&quot;,&quot;op&quot;:&quot;&gt;=&quot;,&quot;val&quot;:2}}],
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:18}],
@@ -405,7 +405,7 @@
     &quot;options&quot;:[ 
 	{ 
 		&quot;text&quot;:&quot;You hear some loud sounds coming from the north.&quot;,
-		&quot;name&quot;:&quot;Flip the switch&quot;
+		&quot;name&quot;:&quot;Flip the switch&quot;,
 			&quot;options&quot;:[{
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:17}],
 			&quot;name&quot;:&quot;Continue&quot; }]
@@ -448,7 +448,7 @@
     &quot;options&quot;:[ 
 	{ 
 		&quot;text&quot;:&quot;You hear some rumbling and commotion from the south. The final gate appears to be open.&quot;,
-		&quot;name&quot;:&quot;Flip the switch&quot;
+		&quot;name&quot;:&quot;Flip the switch&quot;,
 			&quot;options&quot;:[{
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:6}],
 			&quot;name&quot;:&quot;Continue&quot; }]
@@ -502,7 +502,7 @@
 	{ 
 		&quot;text&quot;:&quot;The connected machinery whirrs to life, and the gate to your east opens.&quot;,
 		&quot;action&quot;:[{&quot;deleteMapObject&quot;:-1}],
-		&quot;name&quot;:&quot;Flip the switch&quot;
+		&quot;name&quot;:&quot;Flip the switch&quot;,
 			&quot;options&quot;:[{
 			&quot;action&quot;:[{&quot;deleteMapObject&quot;:11}],
 			&quot;name&quot;:&quot;Continue&quot; }]
@@ -1236,7 +1236,7 @@
 		},   
 		{      
 			&quot;name&quot;:&quot;I did, just like you asked.&quot;,
-			&quot;text&quot;:&quot;...BUT HER MIND IS STILL IMPRISONED.&quot;
+			&quot;text&quot;:&quot;...BUT HER MIND IS STILL IMPRISONED.&quot;,
 			&quot;options&quot;:[
 			{ 	
 				&quot;name&quot;:&quot;Okay, yeah, I remember this now.&quot;,

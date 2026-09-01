@@ -917,7 +917,7 @@ public class CardView extends GameEntityView {
             sb.append("\r\n");
         }
 
-        if (getCanBlockAny()) {
+        if (getCanBlockAny() && !state.getAbilityText().contains("can block any number of creatures")) {
             sb.append("\r\n\r\n");
             sb.append("CARDNAME can block any number of creatures.".replaceAll("CARDNAME", getName()));
             sb.append("\r\n");

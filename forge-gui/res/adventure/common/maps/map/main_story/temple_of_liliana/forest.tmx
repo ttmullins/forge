@@ -200,10 +200,10 @@
   {
     &quot;text&quot;:&quot;The cleric drops several items and rushes toward the nearby building.&quot;,
     &quot;loctext&quot;:&quot;&quot;,
-    &quot;action&quot;: [{&quot;deleteMapObject&quot;: 187}]
+    &quot;action&quot;: [{&quot;deleteMapObject&quot;: 187}],
     &quot;options&quot;:[ 
 	{ &quot;name&quot;:&quot;Look through the items&quot;,
-	  &quot;text&quot;:&quot;There isn't much of interest, but you do find a large and sturdy key.&quot;
+	  &quot;text&quot;:&quot;There isn't much of interest, but you do find a large and sturdy key.&quot;,
 	  &quot;action&quot;:[{&quot;advanceMapFlag&quot;:&quot;cemeteryKey&quot;}],
 	  &quot;options&quot;:[
 		{&quot;name&quot;: &quot;Chase after the cleric&quot;,
@@ -214,7 +214,7 @@
 		]
 	},
 	{ &quot;name&quot;:&quot;Chase after them.&quot;,
-	  &quot;text&quot;:&quot;He manages to shut the elaborate stone door before you can catch him, and you hear a series of large clicks and clacks as it locks before you can locate the actual handle.&quot;
+	  &quot;text&quot;:&quot;He manages to shut the elaborate stone door before you can catch him, and you hear a series of large clicks and clacks as it locks before you can locate the actual handle.&quot;,
 	  &quot;options&quot;:[
 		{&quot;name&quot;: &quot;Search the items&quot;,
 		 &quot;text&quot;: &quot;You find nothing of value except for a large metal key. Rushing back over to the door, you quickly find that the key is much larger than the keyhole for this door.&quot;,
@@ -223,7 +223,7 @@
 		}
 		]
 
-	},
+	}
 	]
   }
 ]</property>

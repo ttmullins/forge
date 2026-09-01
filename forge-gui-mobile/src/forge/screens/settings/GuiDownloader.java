@@ -52,7 +52,7 @@ public class GuiDownloader extends FDialog {
             service.setCancel(true);
             hide();
             if (callback != null) {
-                callback.accept(getButton(0).getText() == "OK"); //determine result based on whether download finished
+                callback.accept("OK".equals(getButton(0).getText())); //determine result based on whether download finished
             }
         }
     };

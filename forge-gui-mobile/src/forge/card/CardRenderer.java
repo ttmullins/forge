@@ -362,7 +362,7 @@ public class CardRenderer {
             }
         }
         //fix display for effect
-        if (imageKey == "" && cardArt == null)
+        if ("".equals(imageKey) && cardArt == null)
             return CardImageRenderer.forgeArt;
         return cardArt;
     }

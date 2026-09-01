@@ -182,6 +182,7 @@ public class PumpEffect extends SpellAbilityEffect {
                 }
                 keywords.addAll(Arrays.asList(sa.getParam("KW").split(" & ")));
             }
+            final boolean cantBlockThisTurn = keywords.remove("HIDDEN CARDNAME can't block.");
 
             if (sa.hasParam("IfDesc")) {
                 if (sa.getParam("IfDesc").equals("True") && sa.hasParam("SpellDescription")) {
@@ -236,13 +237,23 @@ public class PumpEffect extends SpellAbilityEffect {
                 sb.append(i+2 == keywords.size() ? "and " : "");
             }
 
+            if (cantBlockThisTurn) {
+                if (gains) {
+                    sb.append(" and ");
+                } else if (gets) {
+                    // P/T formatting above already leaves a trailing space.
+                    sb.append("and ");
+                }
+                sb.append("can't block");
+            }
+
             if (sa.hasParam("CanBlockAny")) {
-                if (gets || gains) {
+                if (gets || gains || cantBlockThisTurn) {
                     sb.append(" and ");
                 }
                 sb.append("can block any number of creatures");
             } else if (sa.hasParam("CanBlockAmount")) {
-                if (gets || gains) {
+                if (gets || gains || cantBlockThisTurn) {
                     sb.append(" and ");
                 }
                 String n = sa.getParam("CanBlockAmount");

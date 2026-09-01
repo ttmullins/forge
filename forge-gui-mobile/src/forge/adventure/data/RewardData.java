@@ -368,6 +368,9 @@ public class RewardData implements Serializable {
             String basicLandEdition = "";
             for (Reward data : dataList) {
                 PaperCard card = data.getCard();
+                if (card == null) {
+                    continue;
+                }
                 if (card.isVeryBasicLand()) {
                     // ensure that all basic lands share the same edition so the deck doesn't look odd
                     if (basicLandEdition.isEmpty()) {
@@ -380,7 +383,10 @@ public class RewardData implements Serializable {
             }
         } else {
             for (Reward data : dataList) {
-                ret.add(data.getCard());
+                PaperCard card = data.getCard();
+                if (card != null) {
+                    ret.add(card);
+                }
             }
         }
         return ret;

@@ -1027,7 +1027,7 @@
 				&quot;options&quot;:[
 				{
 				&quot;text&quot;:&quot;Like you, some planeswalkers have been imprisoned here by the guardians in the castles. You must defeat them in battle to release us from this plane. Use your powers of magic to challenge them.&quot;,
-				&quot;voiceFile&quot;:&quot;audio/WizPAR2.mp3&quot;
+				&quot;voiceFile&quot;:&quot;audio/WizPAR2.mp3&quot;,
 				&quot;options&quot;:[
 				{
 				&quot;name&quot;:&quot;Continue&quot;,
@@ -1037,7 +1037,7 @@
 				{
 				&quot;name&quot;:&quot;Continue&quot;,
 				&quot;text&quot;:&quot;Take this rune. You can use it anytime to return here. Be careful, planeswalker.&quot;,
-				&quot;voiceFile&quot;:&quot;audio/WizPAR4.mp3&quot;
+				&quot;voiceFile&quot;:&quot;audio/WizPAR4.mp3&quot;,
 				&quot;options&quot;:[
 				{
 				&quot;name&quot;:&quot;Thank you.&quot;,

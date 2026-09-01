@@ -286,7 +286,7 @@ public class ComputerUtilMana {
         } else if (sa.hasParam("AIManaPref")) {
             manaSourceType = sa.getParam("AIManaPref");
         }
-        if (manaSourceType != "") {
+        if (!manaSourceType.isEmpty()) {
             List<SpellAbility> filteredList = Lists.newArrayList(maList);
             switch (manaSourceType) {
                 case "Snow":
