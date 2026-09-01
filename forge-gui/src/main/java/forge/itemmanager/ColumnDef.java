@@ -274,7 +274,10 @@ public enum ColumnDef {
      * The deck color column.
      */
     DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
-            from -> toDeckColor(from.getKey()).getOrderWeight(),
+            from -> {
+                ColorSet color = toDeckColor(from.getKey());
+                return color == null ? -1 : color.getOrderWeight();
+            },
             from -> toDeckColor(from.getKey())),
     /**
      * The deck format column.
@@ -443,7 +446,7 @@ public enum ColumnDef {
     }
 
     private static CardRarity toRarity(final InventoryItem i) {
-        return i instanceof PaperCard ? ((IPaperCard) i).getRarity() : CardRarity.Unknown;
+        return i instanceof PaperCard ? ((PaperCard) i).getRarity() : CardRarity.Unknown;
     }
 
     private static Double toRanking(final InventoryItem i, boolean truncate) {
@@ -631,6 +634,8 @@ public enum ColumnDef {
      * @param otherPart The other half of the card.
      * @return Part of a sortable numeric string.
      */
+    //Split card sorting is probably as complex as sorting gets.
+    //This method serves as an entry point only, separating the two card parts for convenience.
     private static String toSplitSort(final ICardFace mainPart, final ICardFace otherPart) {
         ColorSet mainPartColor = mainPart.getColor();
         ColorSet otherPartColor = otherPart.getColor();
