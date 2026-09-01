@@ -151,9 +151,17 @@ public class MakeCardEffect extends SpellAbilityEffect {
                         if (pack != null) {
                             pc = pack.stream().filter(p -> p.getRules().getMainPart().getName().equals(name)).findAny().get();
                         } else {
-                            // Try to get the card in the sa host's current edition
+                            // Prefer the sa host's current edition, but custom/adventure cards and
+                            // generated cards may not have a matching set-code printing.
                             String editionCode = sa.getHostCard() != null ? sa.getHostCard().getSetCode() : CardEdition.UNKNOWN_CODE;
                             pc = StaticData.instance().getCommonCards().getCard(name, editionCode);
+                            if (pc == null) {
+                                pc = StaticData.instance().getCommonCards().getUniqueByName(name);
+                            }
+                        }
+                        if (pc == null) {
+                            System.err.println("MakeCardEffect didn't find card by name: " + name);
+                            break;
                         }
                         Card card = Card.fromPaperCard(pc, player);
 
@@ -186,8 +194,7 @@ public class MakeCardEffect extends SpellAbilityEffect {
                         Card cc;
                         if (c.getZone().getZoneType().equals(ZoneType.None)) cc = c;
                         else { // make another copy
-                            PaperCard next = StaticData.instance().getCommonCards().getCard(c.getName(), c.getSetCode());
-                            cc = Card.fromPaperCard(next, player);
+                            cc = Card.fromPaperCard(c.getPaperCard(), player);
                             game.getAction().moveTo(ZoneType.None, cc, sa, moveParams);
                         }
                         cc.attachToEntity(game.getCardState(a), sa, true);
