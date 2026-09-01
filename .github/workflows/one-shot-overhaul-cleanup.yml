@@ -1,0 +1,134 @@
+name: One-shot overhaul cleanup
+
+on:
+  push:
+    branches:
+      - overhaul/2026-09-bug-sweep
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup-and-validate:
+    if: github.event.head_commit.message == 'Add one-shot overhaul cleanup workflow'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check out overhaul branch
+        uses: actions/checkout@v4
+        with:
+          ref: overhaul/2026-09-bug-sweep
+          fetch-depth: 0
+
+      - name: Fetch dev baseline
+        run: git fetch origin dev
+
+      - name: Apply final high-confidence cleanup
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import subprocess
+
+          # #7844: restore Foretell flags when rolling back a snapshot.
+          snapshot = Path('forge-game/src/main/java/forge/game/GameSnapshot.java')
+          text = snapshot.read_text()
+          old = '''        //newCard.setForetold(fromCard.isForetold());
+          //newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
+          # Be tolerant of indentation while still requiring exactly one intended pair.
+          if old not in text:
+              old = '''        //newCard.setForetold(fromCard.isForetold());
+        //newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
+          new = '''        newCard.setForetold(fromCard.isForetold());
+        newCard.setForetoldCostByEffect(fromCard.isForetoldCostByEffect());'''
+          assert text.count(old) == 1, 'Expected exactly one commented Foretell restoration pair'
+          snapshot.write_text(text.replace(old, new, 1))
+
+          # #9276: remove accidental whole-file noise by taking ColumnDef directly from dev,
+          # then apply only the intended null-safe DECK_COLOR sort change.
+          column = Path('forge-gui/src/main/java/forge/itemmanager/ColumnDef.java')
+          dev_text = subprocess.check_output(
+              ['git', 'show', 'FETCH_HEAD:forge-gui/src/main/java/forge/itemmanager/ColumnDef.java'],
+              text=True,
+          )
+          old_block = '''    DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
+            from -> toDeckColor(from.getKey()).getOrderWeight(),
+            from -> toDeckColor(from.getKey())),'''
+          new_block = '''    DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
+            from -> {
+                ColorSet color = toDeckColor(from.getKey());
+                return color == null ? -1 : color.getOrderWeight();
+            },
+            from -> toDeckColor(from.getKey())),'''
+          assert dev_text.count(old_block) == 1, 'Expected DECK_COLOR baseline block exactly once in dev'
+          column.write_text(dev_text.replace(old_block, new_block, 1))
+
+          # #11306: item name is used as an edition-name lookup key; the official set is singular.
+          items = Path('forge-gui/res/adventure/common/world/items.json')
+          item_text = items.read_text()
+          typo = 'Landscape Sketchbook - Thrones of Eldraine'
+          fixed = 'Landscape Sketchbook - Throne of Eldraine'
+          assert item_text.count(typo) == 1, 'Expected the Eldraine sketchbook typo exactly once'
+          item_text = item_text.replace(typo, fixed, 1)
+          items.write_text(item_text)
+          json.loads(item_text)
+
+          # Guard the intended end state.
+          final_snapshot = snapshot.read_text()
+          assert 'newCard.setForetold(fromCard.isForetold());' in final_snapshot
+          assert '//newCard.setForetold(fromCard.isForetold());' not in final_snapshot
+          assert typo not in items.read_text()
+          PY
+
+          git diff --check
+          echo '--- Final cleanup diff ---'
+          git diff -- forge-game/src/main/java/forge/game/GameSnapshot.java \
+            forge-gui/src/main/java/forge/itemmanager/ColumnDef.java \
+            forge-gui/res/adventure/common/world/items.json
+
+      - name: Install virtual framebuffer
+        run: command -v Xvfb >/dev/null 2>&1 || { sudo apt-get update && sudo apt-get install -y xvfb; }
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Full Maven test build - Java 17
+        shell: bash
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 >/tmp/xvfb17.log 2>&1 &
+          xvfb_pid=$!
+          trap 'kill $xvfb_pid 2>/dev/null || true' EXIT
+          mvn -U -B clean test
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Full Maven test build - Java 21
+        shell: bash
+        run: |
+          export DISPLAY=:100
+          Xvfb :100 -screen 0 1024x768x24 >/tmp/xvfb21.log 2>&1 &
+          xvfb_pid=$!
+          trap 'kill $xvfb_pid 2>/dev/null || true' EXIT
+          mvn -U -B clean test
+
+      - name: Commit validated cleanup
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add forge-game/src/main/java/forge/game/GameSnapshot.java \
+            forge-gui/src/main/java/forge/itemmanager/ColumnDef.java \
+            forge-gui/res/adventure/common/world/items.json
+          git commit -m 'Finish high-confidence bug-sweep cleanup (#7844, #11306, #9276)'
+          git push origin HEAD:overhaul/2026-09-bug-sweep
