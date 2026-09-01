@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply-and-validate:
-    if: contains(github.event.head_commit.message, 'Apply second dev audit fixes')
+    if: ${{ contains(github.event.head_commit.message, 'Run second dev audit fixer') }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -20,7 +20,7 @@ jobs:
           ref: audit/2026-09-dev-sweep-2
           fetch-depth: 0
 
-      - name: Apply verified issue 11670 Adventure map patch
+      - name: Apply verified issue 11670 patch
         shell: bash
         run: |
           curl -fL --retry 3 'https://github.com/user-attachments/files/31355372/fix-malformed-tmx-dialog-json.patch' -o /tmp/issue-11670.patch
@@ -28,203 +28,32 @@ jobs:
           git apply --check /tmp/issue-11670.patch
           git apply /tmp/issue-11670.patch
 
-      - name: Apply static-audit correctness fixes
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import json
+      - name: Apply audited correctness fixes
+        run: python3 .github/scripts/apply_dev_sweep_2.py
 
-          def replace_one(path, old, new):
-              p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              count = text.count(old)
-              assert count == 1, f'{path}: expected 1 occurrence, found {count}: {old!r}'
-              p.write_text(text.replace(old, new, 1), encoding='utf-8')
-
-          # Standalone resource syntax defects found by parsing every JSON resource.
-          replace_one(
-              'forge-gui/res/adventure/common/ui/quests_portrait.json',
-              '      "height": 413\n\t  "fontColor":"black"',
-              '      "height": 413,\n\t  "fontColor":"black"')
-          replace_one(
-              'forge-gui/res/adventure/common/ui/statistic_portrait.json',
-              '      "y": 440\n    }\n    {\n      "type": "TextButton",\n      "name": "toggleAward"',
-              '      "y": 440\n    },\n    {\n      "type": "TextButton",\n      "name": "toggleAward"')
-          replace_one(
-              'forge-gui/res/adventure/common/world/biomes/outlands.json',
-              '  "spriteNames": []\n \t"structures": [',
-              '  "spriteNames": [],\n \t"structures": [')
-
-          # Java String value comparisons must not use object identity.
-          replace_one(
-              'forge-ai/src/main/java/forge/ai/ComputerUtilMana.java',
-              'if (manaSourceType != "") {',
-              'if (!manaSourceType.isEmpty()) {')
-          replace_one(
-              'forge-gui-mobile/src/forge/card/CardRenderer.java',
-              'if (imageKey == "" && cardArt == null)',
-              'if ("".equals(imageKey) && cardArt == null)')
-          replace_one(
-              'forge-gui-mobile/src/forge/screens/settings/GuiDownloader.java',
-              'callback.accept(getButton(0).getText() == "OK");',
-              'callback.accept("OK".equals(getButton(0).getText()));')
-          replace_one(
-              'forge-gui-desktop/src/main/java/forge/download/GuiDownloader.java',
-              'callback.accept(btnStart.getText() == "OK");',
-              'callback.accept("OK".equals(btnStart.getText()));')
-          replace_one(
-              'forge-game/src/main/java/forge/game/spellability/TargetRestrictions.java',
-              'maxTargets != "1");',
-              '!"1".equals(maxTargets));')
-          replace_one(
-              'forge-game/src/main/java/forge/game/card/Card.java',
-              'if (meld != "" && !hasMeldEffect) {',
-              'if (!meld.isEmpty() && !hasMeldEffect) {')
-
-          group = Path('forge-gui/src/main/java/forge/itemmanager/GroupDef.java')
-          g = group.read_text(encoding='utf-8')
-          assert 'import forge.card.CardRarity;' not in g
-          assert g.count('import forge.card.CardEdition;') == 1
-          assert g.count('if (((PaperCard) item).getRarity().toString() == "R"){') == 1
-          g = g.replace('import forge.card.CardEdition;\n', 'import forge.card.CardEdition;\nimport forge.card.CardRarity;\n', 1)
-          g = g.replace('if (((PaperCard) item).getRarity().toString() == "R"){',
-                        'if (((PaperCard) item).getRarity() == CardRarity.Rare) {', 1)
-          group.write_text(g, encoding='utf-8')
-
-          # The prior MakeCard hardening can only handle a missing pack card if the stream
-          # returns null instead of throwing NoSuchElementException first.
-          replace_one(
-              'forge-game/src/main/java/forge/game/ability/effects/MakeCardEffect.java',
-              'pc = pack.stream().filter(p -> p.getRules().getMainPart().getName().equals(name)).findAny().get();',
-              'pc = pack.stream().filter(p -> p.getRules().getMainPart().getName().equals(name)).findAny().orElse(null);')
-
-          # Card-only consumers should not crash or retain null entries when a reward is non-card.
-          reward = Path('forge-gui-mobile/src/forge/adventure/data/RewardData.java')
-          r = reward.read_text(encoding='utf-8')
-          old = '''            for (Reward data : dataList) {
-                PaperCard card = data.getCard();
-                if (card.isVeryBasicLand()) {'''
-          new = '''            for (Reward data : dataList) {
-                PaperCard card = data.getCard();
-                if (card == null) {
-                    continue;
-                }
-                if (card.isVeryBasicLand()) {'''
-          assert r.count(old) == 1
-          r = r.replace(old, new, 1)
-          old = '''        } else {
-            for (Reward data : dataList) {
-                ret.add(data.getCard());
-            }
-        }'''
-          new = '''        } else {
-            for (Reward data : dataList) {
-                PaperCard card = data.getCard();
-                if (card != null) {
-                    ret.add(card);
-                }
-            }
-        }'''
-          assert r.count(old) == 1
-          reward.write_text(r.replace(old, new, 1), encoding='utf-8')
-
-          # #10730: old Pump scripts intentionally hide the synthetic keyword from card text,
-          # but the stack-description path was printing the raw "HIDDEN CARDNAME" marker.
-          pump = Path('forge-game/src/main/java/forge/game/ability/effects/PumpEffect.java')
-          t = pump.read_text(encoding='utf-8')
-          old = '''                keywords.addAll(Arrays.asList(sa.getParam("KW").split(" & ")));
-            }
-
-            if (sa.hasParam("IfDesc")) {'''
-          new = '''                keywords.addAll(Arrays.asList(sa.getParam("KW").split(" & ")));
-            }
-            final boolean cantBlockThisTurn = keywords.remove("HIDDEN CARDNAME can't block.");
-
-            if (sa.hasParam("IfDesc")) {'''
-          assert t.count(old) == 1
-          t = t.replace(old, new, 1)
-          old = '''            for (int i = 0; i < keywords.size(); i++) {
-                sb.append(keywords.get(i).toLowerCase());
-                sb.append(keywords.size() > 2 && i+1 != keywords.size() ? ", " : "");
-                sb.append(keywords.size() == 2 && i == 0 ? " " : "");
-                sb.append(i+2 == keywords.size() ? "and " : "");
-            }
-
-            if (sa.hasParam("CanBlockAny")) {
-                if (gets || gains) {'''
-          new = '''            for (int i = 0; i < keywords.size(); i++) {
-                sb.append(keywords.get(i).toLowerCase());
-                sb.append(keywords.size() > 2 && i+1 != keywords.size() ? ", " : "");
-                sb.append(keywords.size() == 2 && i == 0 ? " " : "");
-                sb.append(i+2 == keywords.size() ? "and " : "");
-            }
-
-            if (cantBlockThisTurn) {
-                if (gains) {
-                    sb.append(" and ");
-                } else if (gets) {
-                    // P/T formatting above already leaves a trailing space.
-                    sb.append("and ");
-                }
-                sb.append("can't block");
-            }
-
-            if (sa.hasParam("CanBlockAny")) {
-                if (gets || gains || cantBlockThisTurn) {'''
-          assert t.count(old) == 1
-          t = t.replace(old, new, 1)
-          old = '''            } else if (sa.hasParam("CanBlockAmount")) {
-                if (gets || gains) {'''
-          new = '''            } else if (sa.hasParam("CanBlockAmount")) {
-                if (gets || gains || cantBlockThisTurn) {'''
-          assert t.count(old) == 1
-          pump.write_text(t.replace(old, new, 1), encoding='utf-8')
-
-          # #8611: intrinsic CanBlockAny is already present in ability text; only synthesize
-          # the line when the current state does not already describe the ability.
-          replace_one(
-              'forge-game/src/main/java/forge/game/card/CardView.java',
-              '        if (getCanBlockAny()) {\n            sb.append("\\r\\n\\r\\n");\n            sb.append("CARDNAME can block any number of creatures.".replaceAll("CARDNAME", getName()));',
-              '        if (getCanBlockAny() && !state.getAbilityText().contains("can block any number of creatures")) {\n            sb.append("\\r\\n\\r\\n");\n            sb.append("CARDNAME can block any number of creatures.".replaceAll("CARDNAME", getName()));')
-
-          # Validate all standalone JSON resources now that the three syntax defects are fixed.
-          failures = []
-          count = 0
-          for p in Path('.').rglob('*.json'):
-              if '.git' in p.parts or 'target' in p.parts:
-                  continue
-              count += 1
-              try:
-                  json.loads(p.read_text(encoding='utf-8'))
-              except Exception as e:
-                  failures.append(f'{p}: {e}')
-          assert not failures, 'Standalone JSON validation failures:\n' + '\n'.join(failures)
-          print(f'Validated {count} standalone JSON resources')
-          PY
-
-          git diff --check
-          echo 'Product/resource files changed before validation:'
-          git diff --name-only | grep -v '^\.github/workflows/' || true
-
-      - name: Validate XML and TMX containers
+      - name: Validate resource containers and diff
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
-          failures=[]
-          count=0
-          for ext in ('*.xml','*.tmx','*.tsx'):
+          failures = []
+          count = 0
+          for ext in ('*.xml', '*.tmx', '*.tsx'):
               for p in Path('.').rglob(ext):
                   if '.git' in p.parts or 'target' in p.parts:
                       continue
                   count += 1
-                  try: ET.parse(p)
-                  except Exception as e: failures.append(f'{p}: {e}')
-          assert not failures, '\n'.join(failures)
+                  try:
+                      ET.parse(p)
+                  except Exception as e:
+                      failures.append(f'{p}: {e}')
+          if failures:
+              raise SystemExit('\n'.join(failures))
           print(f'Validated {count} XML/TMX/TSX resources')
           PY
+          git diff --check
+          git diff --name-only | grep -v '^\.github/' || true
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -233,7 +62,7 @@ jobs:
           java-version: '17'
           cache: maven
 
-      - name: Full Maven test build - Java 17
+      - name: Full Maven test build on Java 17
         shell: bash
         run: |
           export DISPLAY=:97
@@ -249,7 +78,7 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Full Maven test build - Java 21
+      - name: Full Maven test build on Java 21
         shell: bash
         run: |
           export DISPLAY=:98
@@ -258,17 +87,17 @@ jobs:
           trap 'kill $xvfb_pid 2>/dev/null || true' EXIT
           mvn -U -B clean test
 
-      - name: Remove audit-only workflows and commit validated fixes
+      - name: Commit validated product fixes
         shell: bash
         run: |
-          rm -f \
-            .github/workflows/dev-static-audit.yml \
-            .github/workflows/fetch-11670-patch.yml \
-            .github/workflows/deep-resource-audit.yml \
-            .github/workflows/libgdx-json-audit.yml \
-            .github/workflows/spotbugs-audit.yml \
-            .github/workflows/apply-dev-sweep-2.yml
-
+          rm -f .github/workflows/dev-static-audit.yml
+          rm -f .github/workflows/fetch-11670-patch.yml
+          rm -f .github/workflows/deep-resource-audit.yml
+          rm -f .github/workflows/libgdx-json-audit.yml
+          rm -f .github/workflows/spotbugs-audit.yml
+          rm -f .github/workflows/apply-dev-sweep-2.yml
+          rm -f .github/scripts/apply_dev_sweep_2.py
+          rmdir .github/scripts 2>/dev/null || true
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
