@@ -1,0 +1,81 @@
+name: Deep resource audit
+
+on:
+  push:
+    branches:
+      - audit/2026-09-dev-sweep-2
+
+jobs:
+  audit:
+    if: contains(github.event.head_commit.message, 'Run deep embedded resource audit')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate JSON including JSON embedded in TMX properties
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, xml.etree.ElementTree as ET
+
+          failures = []
+          duplicate_keys = []
+
+          def no_dupes(path):
+              def hook(pairs):
+                  d = {}
+                  seen = set()
+                  for k, v in pairs:
+                      if k in seen:
+                          duplicate_keys.append(f'{path}|duplicate key {k!r}')
+                      seen.add(k)
+                      d[k] = v
+                  return d
+              return hook
+
+          standalone = embedded = 0
+          for p in Path('.').rglob('*.json'):
+              if '.git' in p.parts or 'target' in p.parts:
+                  continue
+              standalone += 1
+              try:
+                  json.loads(p.read_text(encoding='utf-8'), object_pairs_hook=no_dupes(p))
+              except Exception as e:
+                  failures.append(f'JSON|{p}|{e}')
+
+          for p in Path('.').rglob('*.tmx'):
+              if '.git' in p.parts or 'target' in p.parts:
+                  continue
+              try:
+                  root = ET.parse(p).getroot()
+              except Exception as e:
+                  failures.append(f'TMX|{p}|{e}')
+                  continue
+              for prop in root.iter('property'):
+                  text = (prop.text or '').strip()
+                  if not text or text[0] not in '[{':
+                      continue
+                  # Structured object/array-valued TMX properties are JSON data consumed by Adventure.
+                  embedded += 1
+                  try:
+                      json.loads(text, object_pairs_hook=no_dupes(f'{p}#{prop.get("name", "") }'))
+                  except Exception as e:
+                      failures.append(f'EMBEDDED_JSON|{p}|property={prop.get("name")}|{e}')
+
+          print(f'SCANNED standalone_json={standalone} embedded_json_properties={embedded}')
+          print('=== FAILURES ===')
+          print('\n'.join(failures) if failures else 'NONE')
+          print('=== DUPLICATE KEYS ===')
+          print('\n'.join(duplicate_keys) if duplicate_keys else 'NONE')
+          print(f'SUMMARY failures={len(failures)} duplicate_keys={len(duplicate_keys)}')
+          Path('deep-resource-audit.txt').write_text('\n'.join([
+              f'SCANNED standalone_json={standalone} embedded_json_properties={embedded}',
+              'FAILURES:', *failures,
+              'DUPLICATE KEYS:', *duplicate_keys,
+              f'SUMMARY failures={len(failures)} duplicate_keys={len(duplicate_keys)}'
+          ]), encoding='utf-8')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deep-resource-audit
+          path: deep-resource-audit.txt
