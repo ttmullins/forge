@@ -1,0 +1,24 @@
+name: Fetch issue 11670 patch
+
+on:
+  push:
+    branches:
+      - audit/2026-09-dev-sweep-2
+
+jobs:
+  fetch:
+    if: contains(github.event.head_commit.message, 'Fetch issue 11670 patch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download and validate patch
+        shell: bash
+        run: |
+          curl -fL --retry 3 'https://github.com/user-attachments/files/31355372/fix-malformed-tmx-dialog-json.patch' -o fix-malformed-tmx-dialog-json.patch
+          test -s fix-malformed-tmx-dialog-json.patch
+          git apply --check fix-malformed-tmx-dialog-json.patch
+          sed -n '1,240p' fix-malformed-tmx-dialog-json.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-11670-patch
+          path: fix-malformed-tmx-dialog-json.patch
