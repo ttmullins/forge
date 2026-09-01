@@ -274,7 +274,10 @@ public enum ColumnDef {
      * The deck color column.
      */
     DECK_COLOR("lblColor", "ttColor", 70, true, SortState.ASC,
-            from -> toDeckColor(from.getKey()).getOrderWeight(),
+            from -> {
+                ColorSet color = toDeckColor(from.getKey());
+                return color == null ? -1 : color.getOrderWeight();
+            },
             from -> toDeckColor(from.getKey())),
     /**
      * The deck format column.
