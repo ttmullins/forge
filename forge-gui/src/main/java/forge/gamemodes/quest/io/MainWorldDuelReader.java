@@ -23,6 +23,8 @@ import forge.deck.io.DeckStorage;
 import forge.gamemodes.quest.QuestEvent;
 import forge.gamemodes.quest.QuestEventDifficulty;
 import forge.gamemodes.quest.QuestEventDuel;
+import forge.gamemodes.quest.data.QuestPreferences.QPref;
+import forge.model.FModel;
 import forge.util.FileSection;
 import forge.util.FileUtil;
 import forge.util.TextUtil;
@@ -74,17 +76,21 @@ public class MainWorldDuelReader extends StorageReaderFolder<QuestEventDuel> {
             e.printStackTrace();
         }
 
-        // then I add wild decks in constructed directory
-        Iterable<DeckProxy> constructedDecks = DeckProxy.getAllConstructedDecks();
+        // Constructed decks are only used as Quest "Wild opponents". The default
+        // preference is zero, so avoid walking potentially huge user deck libraries
+        // during application startup when the feature is disabled.
+        if (FModel.getQuestPreferences().getPrefInt(QPref.WILD_OPPONENTS_NUMBER) > 0) {
+            final Iterable<DeckProxy> constructedDecks = DeckProxy.getAllConstructedDecks();
 
-        for (DeckProxy constructedDeck : constructedDecks) {
-            Deck currDeck = constructedDeck.getDeck();
-            final QuestEventDuel newDeck = read(currDeck);
-            String newKey = keySelector.apply(newDeck);
-            if (result.containsKey(newKey)) {
-                System.err.println("StorageReaderFolder: an object with key " + newKey + " is already present - skipping new entry");
-            } else {
-                result.put(newKey, newDeck);
+            for (final DeckProxy constructedDeck : constructedDecks) {
+                final Deck currDeck = constructedDeck.getDeck();
+                final QuestEventDuel newDeck = read(currDeck);
+                final String newKey = keySelector.apply(newDeck);
+                if (result.containsKey(newKey)) {
+                    System.err.println("StorageReaderFolder: an object with key " + newKey + " is already present - skipping new entry");
+                } else {
+                    result.put(newKey, newDeck);
+                }
             }
         }
         
