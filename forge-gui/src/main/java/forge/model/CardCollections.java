@@ -21,6 +21,7 @@ import forge.deck.Deck;
 import forge.deck.DeckGroup;
 import forge.deck.io.DeckGroupSerializer;
 import forge.deck.io.DeckStorage;
+import forge.deck.io.LazyDeckStorage;
 import forge.localinstance.properties.ForgeConstants;
 import forge.util.storage.IStorage;
 import forge.util.storage.StorageImmediatelySerialized;
@@ -29,10 +30,15 @@ import java.io.File;
 
 /**
  * Holds editable maps of decks saved to disk. Adding or removing items to(from)
- * such map turns into immediate file update
+ * such map turns into immediate file update.
+ *
+ * <p>Large user-facing deck collections use {@link LazyDeckStorage}, which
+ * indexes filenames and folders immediately but waits to parse each .dck until
+ * that deck is actually needed. This keeps startup and deck-browser entry from
+ * scaling with the total card count of every installed deck.</p>
  */
 public class CardCollections {
-    // Note: These are loaded lazily.
+    // Note: These storages themselves are initialized lazily.
     private IStorage<Deck> constructed;
     private IStorage<DeckGroup> draft;
     private IStorage<DeckGroup> sealed;
@@ -54,9 +60,8 @@ public class CardCollections {
 
     public final IStorage<Deck> getConstructed() {
         if (constructed == null) {
-            constructed = new StorageImmediatelySerialized<>("Constructed decks",
-                    new DeckStorage(new File(ForgeConstants.DECK_CONSTRUCTED_DIR), ForgeConstants.DECK_BASE_DIR, true),
-                    true);
+            constructed = new LazyDeckStorage("Constructed decks",
+                    new File(ForgeConstants.DECK_CONSTRUCTED_DIR), ForgeConstants.DECK_BASE_DIR, true);
         }
         return constructed;
     }
@@ -111,17 +116,16 @@ public class CardCollections {
 
     public IStorage<Deck> getCommander() {
         if (commander == null) {
-            commander = new StorageImmediatelySerialized<>("Commander decks",
-                    new DeckStorage(new File(ForgeConstants.DECK_COMMANDER_DIR), ForgeConstants.DECK_BASE_DIR),
-                    true);
+            commander = new LazyDeckStorage("Commander decks",
+                    new File(ForgeConstants.DECK_COMMANDER_DIR), ForgeConstants.DECK_BASE_DIR);
         }
         return commander;
     }
 
     public IStorage<Deck> getOathbreaker() {
         if (oathbreaker == null) {
-            oathbreaker = new StorageImmediatelySerialized<>("Oathbreaker decks",
-                    new DeckStorage(new File(ForgeConstants.DECK_OATHBREAKER_DIR), ForgeConstants.DECK_BASE_DIR));
+            oathbreaker = new LazyDeckStorage("Oathbreaker decks",
+                    new File(ForgeConstants.DECK_OATHBREAKER_DIR), ForgeConstants.DECK_BASE_DIR);
         }
         return oathbreaker;
     }
@@ -136,16 +140,16 @@ public class CardCollections {
 
     public IStorage<Deck> getTinyLeaders() {
         if (tinyLeaders == null) {
-            tinyLeaders = new StorageImmediatelySerialized<>("Tiny Leaders decks",
-                    new DeckStorage(new File(ForgeConstants.DECK_TINY_LEADERS_DIR), ForgeConstants.DECK_BASE_DIR));
+            tinyLeaders = new LazyDeckStorage("Tiny Leaders decks",
+                    new File(ForgeConstants.DECK_TINY_LEADERS_DIR), ForgeConstants.DECK_BASE_DIR);
         }
         return tinyLeaders;
     }
 
     public IStorage<Deck> getBrawl() {
         if (brawl == null) {
-            brawl = new StorageImmediatelySerialized<>("Brawl decks",
-                    new DeckStorage(new File(ForgeConstants.DECK_BRAWL_DIR), ForgeConstants.DECK_BASE_DIR));
+            brawl = new LazyDeckStorage("Brawl decks",
+                    new File(ForgeConstants.DECK_BRAWL_DIR), ForgeConstants.DECK_BASE_DIR);
         }
         return brawl;
     }
