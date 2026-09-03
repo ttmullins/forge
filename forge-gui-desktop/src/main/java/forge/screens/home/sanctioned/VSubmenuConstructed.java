@@ -1,6 +1,7 @@
 package forge.screens.home.sanctioned;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import forge.deckchooser.FDeckChooser;
 import forge.gamemodes.match.GameLobby;
@@ -30,12 +31,17 @@ public enum VSubmenuConstructed implements IVSubmenu<CSubmenuConstructed> {
     private final DragTab tab = new DragTab(localizer.getMessage("lblConstructedMode"));
     private final GameLobby lobby = new LocalLobby();
     private final VLobby vLobby = new VLobby(lobby);
+    private boolean lobbyInitialized;
+
     VSubmenuConstructed() {
         lobby.setListener(vLobby);
 
         vLobby.setPlayerChangeListener(lobby::applyToSlot);
 
-        vLobby.update(false);
+        // Do not initialize deck choosers here. This singleton is constructed while
+        // FView is still opening the main window, and VLobby.update(false) creates
+        // and populates FDeckChooser instances. With very large constructed deck
+        // libraries that can block the Swing EDT before the main frame is visible.
     }
 
     public VLobby getLobby() {
@@ -120,14 +126,29 @@ public enum VSubmenuConstructed implements IVSubmenu<CSubmenuConstructed> {
         container.removeAll();
         container.setLayout(new MigLayout("insets 0, gap 0, wrap 1, ax right"));
         container.add(vLobby.getLblTitle(), "w 80%, h 40px!, gap 0 0 15px 15px, span 2, al right, pushx");
-
-        for (final FDeckChooser fdc : vLobby.getDeckChoosers()) {
-            fdc.populate();
-        }
-
         container.add(vLobby.getConstructedFrame(), "gap 20px 20px 20px 0px, push, grow");
         container.add(vLobby.getPanelStart(), "gap 0 0 3.5%! 3.5%!, ax center");
 
+        if (!lobbyInitialized) {
+            lobbyInitialized = true;
+
+            // Let the current main-window initialization event finish first. The
+            // deferred lobby update may still have substantial deck-index work to
+            // do, but it no longer prevents Forge from reaching and displaying the
+            // main frame behind the startup splash.
+            SwingUtilities.invokeLater(() -> {
+                vLobby.update(false);
+                refreshContainer(container);
+            });
+        } else {
+            for (final FDeckChooser fdc : vLobby.getDeckChoosers()) {
+                fdc.populate();
+            }
+            refreshContainer(container);
+        }
+    }
+
+    private void refreshContainer(final JPanel container) {
         if (container.isShowing()) {
             container.validate();
             container.repaint();
