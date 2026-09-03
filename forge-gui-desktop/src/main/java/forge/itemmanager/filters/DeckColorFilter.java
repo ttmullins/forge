@@ -32,13 +32,31 @@ public class DeckColorFilter extends StatTypeFilter<DeckProxy> {
         addToggleButton(widget, StatTypes.DECK_MULTICOLOR);
     }
 
+    private boolean isShowingAllColors() {
+        return buttonMap.values().stream().allMatch(button -> button.isSelected());
+    }
+
     @Override
     protected final Predicate<DeckProxy> buildPredicate() {
+        // The default state accepts every color. Avoid asking each DeckProxy for
+        // its color, since doing so materializes LazyFileDeck instances and turns
+        // simply opening a large deck library back into an eager full-file scan.
+        if (isShowingAllColors()) {
+            return deck -> true;
+        }
         return SFilterUtil.buildDeckColorFilter(buttonMap);
     }
 
     @Override
     public void afterFiltersApplied() {
+        // Exact color counts require inspecting deck contents. Do not defeat lazy
+        // deck loading just to populate the default filter badge counts. Once the
+        // user actively filters by color, the relevant decks have to be inspected
+        // anyway and the counts can be calculated normally.
+        if (isShowingAllColors()) {
+            return;
+        }
+
         final ItemPool<? super DeckProxy> items = itemManager.getFilteredItems();
 
         buttonMap.get(StatTypes.DECK_WHITE).setText(String.valueOf(items.countAll(DeckProxy.IS_WHITE, DeckProxy.class)));
