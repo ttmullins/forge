@@ -1,8 +1,8 @@
 package forge.deck.io;
 
 import forge.deck.Deck;
+import forge.deck.LazyFileDeck;
 import forge.util.storage.IStorage;
-import forge.util.storage.StorageBase;
 import forge.util.storage.StorageNestedFolders;
 
 import java.io.File;
@@ -11,10 +11,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -32,8 +29,9 @@ import java.util.stream.Stream;
  * <p>This storage keeps only a lightweight filename -&gt; File index. The file
  * stem is used as the provisional deck name; Forge-created deck files already
  * use the deck's best filename, so normal user decks preserve their expected
- * names. Once a deck is actually loaded, its real metadata name is also cached
- * as an alias.</p>
+ * names. Iteration returns {@link LazyFileDeck} placeholders, allowing the
+ * existing DeckProxy/browser code to enumerate very large libraries without
+ * opening every deck file.</p>
  */
 public final class LazyDeckStorage implements IStorage<Deck> {
     private static final String DCK_EXTENSION = DeckStorage.FILE_EXTENSION;
@@ -151,8 +149,8 @@ public final class LazyDeckStorage implements IStorage<Deck> {
             loadedDecks.putIfAbsent(loaded.getName(), loaded);
         }
 
-        // DeckStorage may move a wrongly named deck when that legacy behavior
-        // is enabled. Keep the lightweight index truthful after the move.
+        // DeckStorage can move wrongly-named root decks as part of Forge's
+        // legacy cleanup behavior. Rebuild this one index entry if that occurs.
         if (moveWronglyNamedDecks && !file.exists()) {
             filesByName.remove(deckName, file);
         }
@@ -224,13 +222,19 @@ public final class LazyDeckStorage implements IStorage<Deck> {
         }
 
         if (file != null) {
-            // Match the old serializer's best-effort delete semantics.
+            // Match the old serializer's best-effort delete semantics without
+            // forcing an unopened deck to deserialize merely to remove it.
             file.delete();
         } else if (loaded != null) {
             serializer.erase(loaded);
         }
     }
 
+    /**
+     * Iteration is deliberately metadata-only. The returned placeholders know
+     * their names immediately and open their backing .dck only when a caller
+     * actually requests deck contents/metadata beyond the name.
+     */
     @Override
     public Iterator<Deck> iterator() {
         final Iterator<String> names = getItemNames().iterator();
@@ -243,18 +247,14 @@ public final class LazyDeckStorage implements IStorage<Deck> {
             @Override
             public Deck next() {
                 final String deckName = names.next();
-                final Deck deck = get(deckName);
-                if (deck == null) {
-                    throw new NoSuchElementException("Deck failed to load: " + deckName);
-                }
-                return deck;
+                return new LazyFileDeck(deckName, () -> get(deckName));
             }
         };
     }
 
     @Override
     public Stream<Deck> stream() {
-        return getItemNames().stream().map(this::get).filter(Objects::nonNull);
+        return getItemNames().stream().map(deckName -> new LazyFileDeck(deckName, () -> get(deckName)));
     }
 
     private Iterable<File> listSubfolders() {
