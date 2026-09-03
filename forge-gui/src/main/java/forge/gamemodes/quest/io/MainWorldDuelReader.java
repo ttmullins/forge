@@ -17,14 +17,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import forge.ImageKeys;
 import forge.deck.Deck;
-import forge.deck.DeckProxy;
 import forge.deck.io.DeckSerializer;
 import forge.deck.io.DeckStorage;
 import forge.gamemodes.quest.QuestEvent;
 import forge.gamemodes.quest.QuestEventDifficulty;
 import forge.gamemodes.quest.QuestEventDuel;
-import forge.gamemodes.quest.data.QuestPreferences.QPref;
-import forge.model.FModel;
 import forge.util.FileSection;
 import forge.util.FileUtil;
 import forge.util.TextUtil;
@@ -44,7 +41,9 @@ public class MainWorldDuelReader extends StorageReaderFolder<QuestEventDuel> {
         
         final Map<String, QuestEventDuel> result = new TreeMap<>();
         
-        // First I add wild decks in quest directory
+        // Load only Quest-owned duel files during application initialization.
+        // User constructed decks are sampled lazily by MainWorldEventDuelManager
+        // when Quest actually generates Wild opponents.
         try {
             Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
@@ -74,24 +73,6 @@ public class MainWorldDuelReader extends StorageReaderFolder<QuestEventDuel> {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        }
-
-        // Constructed decks are only used as Quest "Wild opponents". The default
-        // preference is zero, so avoid walking potentially huge user deck libraries
-        // during application startup when the feature is disabled.
-        if (FModel.getQuestPreferences().getPrefInt(QPref.WILD_OPPONENTS_NUMBER) > 0) {
-            final Iterable<DeckProxy> constructedDecks = DeckProxy.getAllConstructedDecks();
-
-            for (final DeckProxy constructedDeck : constructedDecks) {
-                final Deck currDeck = constructedDeck.getDeck();
-                final QuestEventDuel newDeck = read(currDeck);
-                final String newKey = keySelector.apply(newDeck);
-                if (result.containsKey(newKey)) {
-                    System.err.println("StorageReaderFolder: an object with key " + newKey + " is already present - skipping new entry");
-                } else {
-                    result.put(newKey, newDeck);
-                }
-            }
         }
         
         return result;
@@ -128,15 +109,14 @@ public class MainWorldDuelReader extends StorageReaderFolder<QuestEventDuel> {
         return qc;
     }
 
-    protected QuestEventDuel read(Deck deck) {
+    public static QuestEventDuel createWildOpponent(final Deck deck) {
         final QuestEventDuel qc = new QuestEventDuel();
         qc.setName(deck.getName());
         qc.setTitle(deck.getName());
         qc.setDifficulty(QuestEventDifficulty.WILD);
         qc.setDescription("Wild opponent");
-        qc.setIconImageKey(ImageKeys.ICON_PREFIX + WILD_DEFAULT_ICON_NAME);        
+        qc.setIconImageKey(ImageKeys.ICON_PREFIX + WILD_DEFAULT_ICON_NAME);
         qc.setEventDeck(deck);
-        
         return qc;
     }
 
