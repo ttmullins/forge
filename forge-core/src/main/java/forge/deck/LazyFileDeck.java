@@ -24,10 +24,14 @@ public final class LazyFileDeck extends Deck {
 
     private transient Supplier<Deck> loader;
     private transient boolean loaded;
+    private transient boolean loaderReady;
 
     public LazyFileDeck(final String provisionalName, final Supplier<Deck> loader0) {
+        // Deck's constructor creates the Main section by calling virtual get().
+        // Keep lazy dispatch inert until super(...) has completed.
         super(provisionalName);
         loader = loader0;
+        loaderReady = true;
     }
 
     public boolean isMaterialized() {
@@ -35,7 +39,7 @@ public final class LazyFileDeck extends Deck {
     }
 
     private synchronized void ensureLoaded() {
-        if (loaded) {
+        if (loaded || !loaderReady) {
             return;
         }
         if (loader == null) {
